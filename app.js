@@ -22,7 +22,6 @@ const ADMIN_PINS = {
 // Stato applicazione
 let currentUser = null;
 let chiusure = [];
-let activityLogs = [];
 let userPins = {};
 
 // Elementi DOM
@@ -39,7 +38,6 @@ const logoutBtn = document.getElementById('logoutBtn');
 const tabButtons = document.querySelectorAll('.tab-btn');
 const chiusuraTab = document.getElementById('chiusuraTab');
 const storicoTab = document.getElementById('storicoTab');
-const logTab = document.getElementById('logTab');
 const todayDate = document.getElementById('todayDate');
 const meseFilter = document.getElementById('meseFilter');
 const themeToggle = document.getElementById('themeToggle');
@@ -50,7 +48,6 @@ const settingsModal = document.getElementById('settingsModal');
 document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
     loadChiusureFromFirebase();
-    loadLogsFromFirebase();
     loadPinsFromFirebase();
     loadThemePreference();
     registerServiceWorker();
@@ -77,17 +74,6 @@ async function loadChiusureFromFirebase() {
     }
 }
 
-// Carica log da Firebase
-async function loadLogsFromFirebase() {
-    try {
-        const snapshot = await db.collection('logs').orderBy('timestamp', 'desc').limit(100).get();
-        activityLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        renderLogs();
-    } catch (error) {
-        console.error('Errore caricamento log:', error);
-    }
-}
-
 // Carica PIN personalizzati da Firebase
 async function loadPinsFromFirebase() {
     try {
@@ -102,24 +88,6 @@ async function loadPinsFromFirebase() {
     } catch (error) {
         console.error('Errore caricamento PIN:', error);
         userPins = { ...ADMIN_PINS };
-    }
-}
-
-// Salva log attività
-async function saveLog(action, details = '') {
-    const log = {
-        action,
-        user: currentUser || 'Sistema',
-        details,
-        timestamp: new Date().toISOString()
-    };
-    
-    try {
-        await db.collection('logs').add(log);
-        activityLogs.unshift(log);
-        renderLogs();
-    } catch (error) {
-        console.error('Errore salvataggio log:', error);
     }
 }
 
@@ -238,9 +206,16 @@ function handleLogin() {
         mainScreen.classList.add('active');
         currentUserSpan.textContent = user;
         showToast('Accesso effettuato!', 'success');
-        saveLog('login', `Accesso effettuato`);
         resetForm();
         renderStorico();
+        
+        // Pietro può vedere solo storico
+        if (user === 'PIETRO') {
+            document.getElementById('tabChiusura').style.display = 'none';
+            switchTab('storico');
+        } else {
+            document.getElementById('tabChiusura').style.display = 'flex';
+        }
     } else {
         showToast('PIN non corretto!', 'error');
         pinInput.value = '';
@@ -255,12 +230,13 @@ function resetLogin() {
 }
 
 function handleLogout() {
-    saveLog('logout', 'Logout effettuato');
     currentUser = null;
     mainScreen.classList.remove('active');
     loginScreen.classList.add('active');
     resetLogin();
     resetForm();
+    // Ripristina tab chiusura visibile per prossimo login
+    document.getElementById('tabChiusura').style.display = 'flex';
     showToast('Logout effettuato', 'success');
 }
 
@@ -272,12 +248,9 @@ function switchTab(tab) {
     
     chiusuraTab.classList.toggle('active', tab === 'chiusura');
     storicoTab.classList.toggle('active', tab === 'storico');
-    logTab.classList.toggle('active', tab === 'log');
     
     if (tab === 'storico') {
         renderStorico();
-    } else if (tab === 'log') {
-        renderLogs();
     }
 }
 
@@ -427,11 +400,9 @@ async function saveChiusuraToFirebase(chiusura, existingId) {
                 return;
             }
             await db.collection('chiusure').doc(existingId).set(chiusura);
-            saveLog('save', `Chiusura modificata - ${chiusura.data} - €${chiusura.granTotale.toFixed(2)}`);
         } else {
             // Crea nuova
             await db.collection('chiusure').add(chiusura);
-            saveLog('save', `Nuova chiusura - ${chiusura.data} - €${chiusura.granTotale.toFixed(2)}`);
         }
         
         showToast('Chiusura salvata con successo!', 'success');
@@ -852,58 +823,6 @@ function exportToCSV() {
     showToast(`Esportato: ${filename}`, 'success');
 }
 
-// RENDER LOGS
-function renderLogs() {
-    const list = document.getElementById('logList');
-    
-    if (!activityLogs || activityLogs.length === 0) {
-        list.innerHTML = `
-            <div class="no-data">
-                <i class="fas fa-clipboard-list"></i>
-                <p>Nessuna attività registrata</p>
-            </div>
-        `;
-        return;
-    }
-    
-    list.innerHTML = activityLogs.map(log => {
-        const date = new Date(log.timestamp);
-        const timeStr = date.toLocaleString('it-IT', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-        
-        let iconClass = 'save';
-        let icon = 'fa-save';
-        if (log.action === 'login') {
-            iconClass = 'login';
-            icon = 'fa-sign-in-alt';
-        } else if (log.action === 'logout') {
-            iconClass = 'logout';
-            icon = 'fa-sign-out-alt';
-        } else if (log.action === 'pin') {
-            iconClass = 'pin';
-            icon = 'fa-key';
-        }
-        
-        return `
-            <div class="log-item">
-                <div class="log-icon ${iconClass}">
-                    <i class="fas ${icon}"></i>
-                </div>
-                <div class="log-info">
-                    <div class="log-action">${log.details || log.action}</div>
-                    <div class="log-user"><i class="fas fa-user"></i> ${log.user}</div>
-                </div>
-                <div class="log-time">${timeStr}</div>
-            </div>
-        `;
-    }).join('');
-}
-
 // CHANGE PIN
 async function changePin() {
     const currentPinInput = document.getElementById('currentPin').value;
@@ -932,9 +851,6 @@ async function changePin() {
         // Aggiorna PIN su Firebase
         userPins[currentUser] = newPin;
         await db.collection('settings').doc('pins').set(userPins);
-        
-        // Log
-        saveLog('pin', `PIN modificato`);
         
         // Reset form
         document.getElementById('currentPin').value = '';
