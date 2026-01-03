@@ -1,3 +1,17 @@
+// Firebase Configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyCaj0z8RjecxqHD34fU-KOuddKgZs03kJI",
+    authDomain: "skalette-5a0a0.firebaseapp.com",
+    projectId: "skalette-5a0a0",
+    storageBucket: "skalette-5a0a0.firebasestorage.app",
+    messagingSenderId: "750623615446",
+    appId: "1:750623615446:web:65be2e80342640e0be1c77"
+};
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
 // Configurazione PIN per ogni admin (puoi cambiarli)
 const ADMIN_PINS = {
     'LUCA': '1111',
@@ -7,7 +21,7 @@ const ADMIN_PINS = {
 
 // Stato applicazione
 let currentUser = null;
-let chiusure = JSON.parse(localStorage.getItem('chiusure')) || [];
+let chiusure = [];
 
 // Elementi DOM
 const loginScreen = document.getElementById('loginScreen');
@@ -29,7 +43,20 @@ const meseFilter = document.getElementById('meseFilter');
 // Inizializzazione
 document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
+    loadChiusureFromFirebase();
 });
+
+// Carica chiusure da Firebase
+async function loadChiusureFromFirebase() {
+    try {
+        const snapshot = await db.collection('chiusure').orderBy('data', 'desc').get();
+        chiusure = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderStorico();
+    } catch (error) {
+        console.error('Errore caricamento dati:', error);
+        showToast('Errore connessione database', 'error');
+    }
+}
 
 function initializeApp() {
     // Imposta data odierna
@@ -286,25 +313,31 @@ function salvaChiusura() {
         differenza: granTotale - fiscale
     };
     
-    if (existingIndex >= 0) {
-        if (confirm('Esiste già una chiusura per oggi. Vuoi sovrascriverla?')) {
-            chiusure[existingIndex] = chiusura;
+    // Salva su Firebase
+    saveChiusuraToFirebase(chiusura, existingIndex >= 0 ? chiusure[existingIndex].id : null);
+}
+
+async function saveChiusuraToFirebase(chiusura, existingId) {
+    try {
+        if (existingId) {
+            // Aggiorna esistente
+            if (!confirm('Esiste già una chiusura per oggi. Vuoi sovrascriverla?')) {
+                return;
+            }
+            await db.collection('chiusure').doc(existingId).set(chiusura);
         } else {
-            return;
+            // Crea nuova
+            await db.collection('chiusure').add(chiusura);
         }
-    } else {
-        chiusure.push(chiusura);
+        
+        showToast('Chiusura salvata con successo!', 'success');
+        await loadChiusureFromFirebase();
+        resetForm();
+        switchTab('storico');
+    } catch (error) {
+        console.error('Errore salvataggio:', error);
+        showToast('Errore nel salvataggio', 'error');
     }
-    
-    // Ordina per data decrescente
-    chiusure.sort((a, b) => new Date(b.data) - new Date(a.data));
-    
-    // Salva
-    localStorage.setItem('chiusure', JSON.stringify(chiusure));
-    
-    showToast('Chiusura salvata con successo!', 'success');
-    resetForm();
-    switchTab('storico');
 }
 
 function resetForm() {
