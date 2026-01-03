@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chiusure Skalette</title>
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -57,10 +64,16 @@
                 <h1>SKALETTE</h1>
             </div>
             <div class="header-right">
+                <button id="themeToggle" class="btn-icon" title="Cambia tema">
+                    <i class="fas fa-moon"></i>
+                </button>
                 <span class="user-badge">
                     <i class="fas fa-user-circle"></i>
                     <span id="currentUser"></span>
                 </span>
+                <button id="settingsBtn" class="btn-icon" title="Impostazioni">
+                    <i class="fas fa-cog"></i>
+                </button>
                 <button id="logoutBtn" class="btn-icon" title="Logout">
                     <i class="fas fa-sign-out-alt"></i>
                 </button>
@@ -75,6 +88,10 @@
             <button class="tab-btn" data-tab="storico">
                 <i class="fas fa-history"></i>
                 <span>Storico</span>
+            </button>
+            <button class="tab-btn" data-tab="log">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Log Attività</span>
             </button>
         </nav>
 
@@ -275,6 +292,18 @@
                 </div>
             </div>
         </main>
+
+        <!-- Log Tab -->
+        <main id="logTab" class="tab-content">
+            <div class="log-container">
+                <div class="log-header">
+                    <h2><i class="fas fa-clipboard-list"></i> Log Attività</h2>
+                </div>
+                <div class="log-list" id="logList">
+                    <!-- Log entries -->
+                </div>
+            </div>
+        </main>
     </div>
 
     <!-- Modal Dettaglio -->
@@ -286,6 +315,36 @@
             </div>
             <div class="modal-body" id="modalBody">
                 <!-- Dettagli chiusura -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Impostazioni -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-cog"></i> Impostazioni</h2>
+                <button class="modal-close" id="closeSettings">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3><i class="fas fa-key"></i> Cambia PIN</h3>
+                    <div class="input-group">
+                        <label>PIN Attuale</label>
+                        <input type="password" id="currentPin" maxlength="4" placeholder="••••">
+                    </div>
+                    <div class="input-group">
+                        <label>Nuovo PIN</label>
+                        <input type="password" id="newPin" maxlength="4" placeholder="••••">
+                    </div>
+                    <div class="input-group">
+                        <label>Conferma Nuovo PIN</label>
+                        <input type="password" id="confirmPin" maxlength="4" placeholder="••••">
+                    </div>
+                    <button id="changePinBtn" class="btn-primary">
+                        <i class="fas fa-save"></i> Salva Nuovo PIN
+                    </button>
+                </div>
             </div>
         </div>
     </div>

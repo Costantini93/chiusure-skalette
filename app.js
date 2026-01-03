@@ -22,6 +22,8 @@ const ADMIN_PINS = {
 // Stato applicazione
 let currentUser = null;
 let chiusure = [];
+let activityLogs = [];
+let userPins = {};
 
 // Elementi DOM
 const loginScreen = document.getElementById('loginScreen');
@@ -37,14 +39,31 @@ const logoutBtn = document.getElementById('logoutBtn');
 const tabButtons = document.querySelectorAll('.tab-btn');
 const chiusuraTab = document.getElementById('chiusuraTab');
 const storicoTab = document.getElementById('storicoTab');
+const logTab = document.getElementById('logTab');
 const todayDate = document.getElementById('todayDate');
 const meseFilter = document.getElementById('meseFilter');
+const themeToggle = document.getElementById('themeToggle');
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsModal = document.getElementById('settingsModal');
 
 // Inizializzazione
 document.addEventListener('DOMContentLoaded', () => {
     initializeApp();
     loadChiusureFromFirebase();
+    loadLogsFromFirebase();
+    loadPinsFromFirebase();
+    loadThemePreference();
+    registerServiceWorker();
 });
+
+// Service Worker per PWA
+function registerServiceWorker() {
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('Service Worker registrato'))
+            .catch(err => console.log('Service Worker non registrato', err));
+    }
+}
 
 // Carica chiusure da Firebase
 async function loadChiusureFromFirebase() {
@@ -56,6 +75,68 @@ async function loadChiusureFromFirebase() {
         console.error('Errore caricamento dati:', error);
         showToast('Errore connessione database', 'error');
     }
+}
+
+// Carica log da Firebase
+async function loadLogsFromFirebase() {
+    try {
+        const snapshot = await db.collection('logs').orderBy('timestamp', 'desc').limit(100).get();
+        activityLogs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderLogs();
+    } catch (error) {
+        console.error('Errore caricamento log:', error);
+    }
+}
+
+// Carica PIN personalizzati da Firebase
+async function loadPinsFromFirebase() {
+    try {
+        const doc = await db.collection('settings').doc('pins').get();
+        if (doc.exists) {
+            userPins = doc.data();
+        } else {
+            // Inizializza con PIN di default
+            userPins = { ...ADMIN_PINS };
+            await db.collection('settings').doc('pins').set(userPins);
+        }
+    } catch (error) {
+        console.error('Errore caricamento PIN:', error);
+        userPins = { ...ADMIN_PINS };
+    }
+}
+
+// Salva log attività
+async function saveLog(action, details = '') {
+    const log = {
+        action,
+        user: currentUser || 'Sistema',
+        details,
+        timestamp: new Date().toISOString()
+    };
+    
+    try {
+        await db.collection('logs').add(log);
+        activityLogs.unshift(log);
+        renderLogs();
+    } catch (error) {
+        console.error('Errore salvataggio log:', error);
+    }
+}
+
+// Tema chiaro/scuro
+function loadThemePreference() {
+    const theme = localStorage.getItem('theme') || 'dark';
+    if (theme === 'light') {
+        document.body.classList.add('light-theme');
+        themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+    }
+}
+
+function toggleTheme() {
+    document.body.classList.toggle('light-theme');
+    const isLight = document.body.classList.contains('light-theme');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    themeToggle.innerHTML = isLight ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
 }
 
 function initializeApp() {
@@ -121,6 +202,19 @@ function setupEventListeners() {
     document.getElementById('detailModal').addEventListener('click', (e) => {
         if (e.target.id === 'detailModal') closeModal();
     });
+    
+    // Theme toggle
+    themeToggle.addEventListener('click', toggleTheme);
+    
+    // Settings modal
+    settingsBtn.addEventListener('click', () => settingsModal.classList.add('active'));
+    document.getElementById('closeSettings').addEventListener('click', () => settingsModal.classList.remove('active'));
+    settingsModal.addEventListener('click', (e) => {
+        if (e.target.id === 'settingsModal') settingsModal.classList.remove('active');
+    });
+    
+    // Change PIN
+    document.getElementById('changePinBtn').addEventListener('click', changePin);
 }
 
 // LOGIN FUNCTIONS
@@ -135,12 +229,16 @@ function handleLogin() {
     const user = selectedUserSpan.textContent;
     const pin = pinInput.value;
     
-    if (ADMIN_PINS[user] === pin) {
+    // Usa PIN personalizzati o default
+    const correctPin = userPins[user] || ADMIN_PINS[user];
+    
+    if (correctPin === pin) {
         currentUser = user;
         loginScreen.classList.remove('active');
         mainScreen.classList.add('active');
         currentUserSpan.textContent = user;
         showToast('Accesso effettuato!', 'success');
+        saveLog('login', `Accesso effettuato`);
         resetForm();
         renderStorico();
     } else {
@@ -157,6 +255,7 @@ function resetLogin() {
 }
 
 function handleLogout() {
+    saveLog('logout', 'Logout effettuato');
     currentUser = null;
     mainScreen.classList.remove('active');
     loginScreen.classList.add('active');
@@ -173,9 +272,12 @@ function switchTab(tab) {
     
     chiusuraTab.classList.toggle('active', tab === 'chiusura');
     storicoTab.classList.toggle('active', tab === 'storico');
+    logTab.classList.toggle('active', tab === 'log');
     
     if (tab === 'storico') {
         renderStorico();
+    } else if (tab === 'log') {
+        renderLogs();
     }
 }
 
@@ -325,9 +427,11 @@ async function saveChiusuraToFirebase(chiusura, existingId) {
                 return;
             }
             await db.collection('chiusure').doc(existingId).set(chiusura);
+            saveLog('save', `Chiusura modificata - ${chiusura.data} - €${chiusura.granTotale.toFixed(2)}`);
         } else {
             // Crea nuova
             await db.collection('chiusure').add(chiusura);
+            saveLog('save', `Nuova chiusura - ${chiusura.data} - €${chiusura.granTotale.toFixed(2)}`);
         }
         
         showToast('Chiusura salvata con successo!', 'success');
@@ -746,6 +850,103 @@ function exportToCSV() {
     link.click();
     
     showToast(`Esportato: ${filename}`, 'success');
+}
+
+// RENDER LOGS
+function renderLogs() {
+    const list = document.getElementById('logList');
+    
+    if (!activityLogs || activityLogs.length === 0) {
+        list.innerHTML = `
+            <div class="no-data">
+                <i class="fas fa-clipboard-list"></i>
+                <p>Nessuna attività registrata</p>
+            </div>
+        `;
+        return;
+    }
+    
+    list.innerHTML = activityLogs.map(log => {
+        const date = new Date(log.timestamp);
+        const timeStr = date.toLocaleString('it-IT', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        let iconClass = 'save';
+        let icon = 'fa-save';
+        if (log.action === 'login') {
+            iconClass = 'login';
+            icon = 'fa-sign-in-alt';
+        } else if (log.action === 'logout') {
+            iconClass = 'logout';
+            icon = 'fa-sign-out-alt';
+        } else if (log.action === 'pin') {
+            iconClass = 'pin';
+            icon = 'fa-key';
+        }
+        
+        return `
+            <div class="log-item">
+                <div class="log-icon ${iconClass}">
+                    <i class="fas ${icon}"></i>
+                </div>
+                <div class="log-info">
+                    <div class="log-action">${log.details || log.action}</div>
+                    <div class="log-user"><i class="fas fa-user"></i> ${log.user}</div>
+                </div>
+                <div class="log-time">${timeStr}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+// CHANGE PIN
+async function changePin() {
+    const currentPinInput = document.getElementById('currentPin').value;
+    const newPin = document.getElementById('newPin').value;
+    const confirmPin = document.getElementById('confirmPin').value;
+    
+    // Verifica PIN corrente
+    const correctPin = userPins[currentUser] || ADMIN_PINS[currentUser];
+    if (currentPinInput !== correctPin) {
+        showToast('PIN attuale non corretto', 'error');
+        return;
+    }
+    
+    // Verifica nuovo PIN
+    if (newPin.length !== 4 || !/^\d+$/.test(newPin)) {
+        showToast('Il PIN deve essere di 4 cifre', 'error');
+        return;
+    }
+    
+    if (newPin !== confirmPin) {
+        showToast('I PIN non coincidono', 'error');
+        return;
+    }
+    
+    try {
+        // Aggiorna PIN su Firebase
+        userPins[currentUser] = newPin;
+        await db.collection('settings').doc('pins').set(userPins);
+        
+        // Log
+        saveLog('pin', `PIN modificato`);
+        
+        // Reset form
+        document.getElementById('currentPin').value = '';
+        document.getElementById('newPin').value = '';
+        document.getElementById('confirmPin').value = '';
+        
+        settingsModal.classList.remove('active');
+        showToast('PIN aggiornato con successo!', 'success');
+    } catch (error) {
+        console.error('Errore aggiornamento PIN:', error);
+        showToast('Errore nel salvataggio', 'error');
+    }
 }
 
 // Esponi funzioni globali necessarie per onclick inline

@@ -20,13 +20,42 @@
     --border-radius: 12px;
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    
+    /* Dark theme (default) */
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-card: rgba(30, 41, 59, 0.6);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --input-bg: rgba(15, 23, 42, 0.8);
+}
+
+/* Light Theme */
+body.light-theme {
+    --bg-primary: #f1f5f9;
+    --bg-secondary: #ffffff;
+    --bg-card: rgba(255, 255, 255, 0.9);
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --border-color: rgba(0, 0, 0, 0.1);
+    --input-bg: #ffffff;
+    --dark: #ffffff;
+    --darker: #f1f5f9;
+    --light: #1e293b;
+    --gray: #64748b;
 }
 
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
     min-height: 100vh;
-    color: #f8fafc;
+    color: var(--text-primary);
+    transition: background 0.3s, color 0.3s;
+}
+
+body.light-theme {
+    background: linear-gradient(135deg, #e2e8f0 0%, #f8fafc 100%);
 }
 
 .screen {
@@ -1181,4 +1210,164 @@ header {
 
 .toast span {
     color: var(--light);
+}
+
+/* LOG TAB */
+.log-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.log-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.3rem;
+}
+
+.log-header h2 i {
+    color: var(--primary);
+}
+
+.log-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.log-item {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.log-item .log-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.log-icon.login {
+    background: rgba(37, 99, 235, 0.2);
+    color: var(--primary);
+}
+
+.log-icon.logout {
+    background: rgba(239, 68, 68, 0.2);
+    color: var(--danger);
+}
+
+.log-icon.save {
+    background: rgba(16, 185, 129, 0.2);
+    color: var(--success);
+}
+
+.log-icon.pin {
+    background: rgba(245, 158, 11, 0.2);
+    color: var(--warning);
+}
+
+.log-item .log-info {
+    flex: 1;
+}
+
+.log-item .log-action {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.log-item .log-user {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.log-item .log-time {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-align: right;
+}
+
+/* SETTINGS MODAL */
+.settings-section {
+    margin-bottom: 25px;
+}
+
+.settings-section h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    color: var(--primary-light);
+    font-size: 1rem;
+}
+
+.settings-section .input-group {
+    margin-bottom: 15px;
+}
+
+.settings-section .input-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.settings-section .input-group input {
+    width: 100%;
+    padding: 12px 15px;
+    background: var(--input-bg);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-primary);
+    font-size: 1rem;
+    text-align: center;
+    letter-spacing: 8px;
+}
+
+.settings-section .input-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* Light theme specific overrides */
+body.light-theme .login-container,
+body.light-theme .login-form {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+body.light-theme .form-section,
+body.light-theme .storico-item,
+body.light-theme .summary-card,
+body.light-theme .chart-section {
+    background: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+body.light-theme .input-with-icon input,
+body.light-theme .cash-item input,
+body.light-theme #meseFilter {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.light-theme header {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+body.light-theme .tabs {
+    background: rgba(241, 245, 249, 0.8);
+}
+
+body.light-theme .modal-content {
+    background: var(--bg-secondary);
 }
