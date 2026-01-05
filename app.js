@@ -891,10 +891,13 @@ function exportToCSV() {
     const filterValue = meseFilter.value;
     const [year, month] = filterValue.split('-').map(Number);
     
-    const filtered = chiusure.filter(c => {
+    let filtered = chiusure.filter(c => {
         const date = new Date(c.data);
         return date.getFullYear() === year && (date.getMonth() + 1) === month;
     });
+    
+    // Ordina per data crescente
+    filtered = filtered.sort((a, b) => new Date(a.data) - new Date(b.data));
     
     if (filtered.length === 0) {
         showToast('Nessun dato da esportare', 'error');
@@ -1000,10 +1003,13 @@ function exportToPDF() {
     const filterValue = meseFilter.value;
     const [year, month] = filterValue.split('-').map(Number);
     
-    const filtered = chiusure.filter(c => {
+    let filtered = chiusure.filter(c => {
         const date = new Date(c.data);
         return date.getFullYear() === year && (date.getMonth() + 1) === month;
     });
+    
+    // Ordina per data crescente
+    filtered = filtered.sort((a, b) => new Date(a.data) - new Date(b.data));
     
     if (filtered.length === 0) {
         showToast('Nessun dato da esportare', 'error');
