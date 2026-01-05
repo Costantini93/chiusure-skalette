@@ -1044,7 +1044,7 @@ function exportToPDF() {
     doc.setFontSize(10);
     doc.setTextColor(60);
     doc.setFillColor(245, 247, 250);
-    doc.roundedRect(14, 40, 182, 30, 3, 3, 'F');
+    doc.roundedRect(14, 40, 182, 40, 3, 3, 'F');
     
     doc.text(`Totale Chiusure: ${filtered.length}`, 20, 50);
     doc.text(`Totale Mese: ${formatCurrency(totaleMese)}`, 70, 50);
@@ -1052,9 +1052,12 @@ function exportToPDF() {
     
     doc.text(`Totale POS: ${formatCurrency(totalePOS)}`, 20, 60);
     doc.text(`Totale Contanti: ${formatCurrency(totaleContanti)}`, 70, 60);
+    doc.text(`Totale Spese: ${formatCurrency(totaleSpese)}`, 130, 60);
     
     // Differenza con colore
-    const diffText = `Differenza Totale: ${formatCurrency(totaleDifferenza)}`;
+    doc.setTextColor(60);
+    doc.text(`Differenza Totale:`, 20, 70);
+    const diffText = `${formatCurrency(totaleDifferenza)}`;
     if (totaleDifferenza > 0) {
         doc.setTextColor(16, 185, 129); // verde
     } else if (totaleDifferenza < 0) {
@@ -1062,7 +1065,7 @@ function exportToPDF() {
     } else {
         doc.setTextColor(100);
     }
-    doc.text(diffText, 130, 60);
+    doc.text(diffText, 55, 70);
     doc.setTextColor(60);
     
     // Tabella dati
@@ -1085,7 +1088,7 @@ function exportToPDF() {
     });
     
     doc.autoTable({
-        startY: 75,
+        startY: 85,
         head: [['Data', 'Operatore', 'Fiscale', 'POS', 'Contanti', 'Spese', 'Totale', 'Diff.']],
         body: tableData,
         theme: 'striped',
