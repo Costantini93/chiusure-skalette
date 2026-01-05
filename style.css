@@ -791,6 +791,14 @@ body.light-theme .date-input::-webkit-calendar-picker-indicator {
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
+.btn-export.btn-pdf {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+}
+
+.btn-export.btn-pdf:hover {
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
 /* CHART SECTION */
 .chart-section {
     background: rgba(30, 41, 59, 0.6);
@@ -845,7 +853,7 @@ body.light-theme .date-input::-webkit-calendar-picker-indicator {
 
 .storico-summary {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 15px;
 }
 
@@ -862,6 +870,22 @@ body.light-theme .date-input::-webkit-calendar-picker-indicator {
 .summary-card i {
     font-size: 2rem;
     color: var(--primary);
+}
+
+.summary-card.diff-card i {
+    color: var(--warning);
+}
+
+.summary-card.diff-card .summary-value.positive {
+    color: var(--success);
+}
+
+.summary-card.diff-card .summary-value.negative {
+    color: var(--danger);
+}
+
+.summary-card.diff-card .summary-value.zero {
+    color: var(--gray);
 }
 
 .summary-info {
@@ -918,6 +942,13 @@ body.light-theme .date-input::-webkit-calendar-picker-indicator {
     padding: 10px 15px;
     border-radius: 10px;
     min-width: 60px;
+}
+
+.storico-date .weekday {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    letter-spacing: 1px;
 }
 
 .storico-date .day {

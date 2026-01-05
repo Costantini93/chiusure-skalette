@@ -156,6 +156,9 @@ function setupEventListeners() {
     // Export CSV
     document.getElementById('exportBtn').addEventListener('click', exportToCSV);
     
+    // Export PDF
+    document.getElementById('exportPdfBtn').addEventListener('click', exportToPDF);
+    
     // Aggiungi spesa
     document.getElementById('addSpesa').addEventListener('click', addSpesaRow);
     
@@ -472,6 +475,19 @@ function renderStorico() {
     const mediaGiornaliera = filtered.length > 0 ? totaleMese / filtered.length : 0;
     document.getElementById('mediaGiornaliera').textContent = formatCurrency(mediaGiornaliera);
     
+    // Totale differenza mensile
+    const totaleDifferenza = filtered.reduce((sum, c) => sum + (c.differenza || 0), 0);
+    const diffElement = document.getElementById('totaleDifferenza');
+    diffElement.textContent = formatCurrency(totaleDifferenza);
+    diffElement.classList.remove('positive', 'negative', 'zero');
+    if (totaleDifferenza > 0) {
+        diffElement.classList.add('positive');
+    } else if (totaleDifferenza < 0) {
+        diffElement.classList.add('negative');
+    } else {
+        diffElement.classList.add('zero');
+    }
+    
     // Render grafico
     renderChart(filtered, year, month);
     
@@ -492,11 +508,13 @@ function renderStorico() {
         const date = new Date(c.data);
         const day = date.getDate();
         const monthName = date.toLocaleDateString('it-IT', { month: 'short' });
+        const weekDay = date.toLocaleDateString('it-IT', { weekday: 'short' }).toUpperCase();
         
         return `
             <div class="storico-item" onclick="showDetail('${c.data}')">
                 <div class="storico-item-left">
                     <div class="storico-date">
+                        <span class="weekday">${weekDay}</span>
                         <span class="day">${day}</span>
                         <span class="month">${monthName}</span>
                     </div>
@@ -976,6 +994,149 @@ function exportToCSV() {
     showToast(`Esportato: ${filename}`, 'success');
 }
 
+// EXPORT PDF FUNCTION
+function exportToPDF() {
+    const { jsPDF } = window.jspdf;
+    const filterValue = meseFilter.value;
+    const [year, month] = filterValue.split('-').map(Number);
+    
+    const filtered = chiusure.filter(c => {
+        const date = new Date(c.data);
+        return date.getFullYear() === year && (date.getMonth() + 1) === month;
+    });
+    
+    if (filtered.length === 0) {
+        showToast('Nessun dato da esportare', 'error');
+        return;
+    }
+    
+    const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 
+                        'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+    const monthName = monthNames[month - 1];
+    
+    // Calcola totali
+    const totaleMese = filtered.reduce((sum, c) => sum + c.granTotale, 0);
+    const totaleFiscale = filtered.reduce((sum, c) => sum + c.fiscale, 0);
+    const totaleDifferenza = filtered.reduce((sum, c) => sum + (c.differenza || 0), 0);
+    const totalePOS = filtered.reduce((sum, c) => sum + c.pos.totale, 0);
+    const totaleContanti = filtered.reduce((sum, c) => sum + c.cash.totale, 0);
+    const totaleSpese = filtered.reduce((sum, c) => sum + c.speseTotale, 0);
+    
+    // Crea PDF
+    const doc = new jsPDF();
+    
+    // Header
+    doc.setFontSize(20);
+    doc.setTextColor(37, 99, 235);
+    doc.text('SKALETTE', 105, 20, { align: 'center' });
+    
+    doc.setFontSize(14);
+    doc.setTextColor(100);
+    doc.text(`Report Chiusure - ${monthName} ${year}`, 105, 30, { align: 'center' });
+    
+    // Summary box
+    doc.setFontSize(10);
+    doc.setTextColor(60);
+    doc.setFillColor(245, 247, 250);
+    doc.roundedRect(14, 40, 182, 30, 3, 3, 'F');
+    
+    doc.text(`Totale Chiusure: ${filtered.length}`, 20, 50);
+    doc.text(`Totale Mese: ${formatCurrency(totaleMese)}`, 70, 50);
+    doc.text(`Totale Fiscale: ${formatCurrency(totaleFiscale)}`, 130, 50);
+    
+    doc.text(`Totale POS: ${formatCurrency(totalePOS)}`, 20, 60);
+    doc.text(`Totale Contanti: ${formatCurrency(totaleContanti)}`, 70, 60);
+    
+    // Differenza con colore
+    const diffText = `Differenza Totale: ${formatCurrency(totaleDifferenza)}`;
+    if (totaleDifferenza > 0) {
+        doc.setTextColor(16, 185, 129); // verde
+    } else if (totaleDifferenza < 0) {
+        doc.setTextColor(239, 68, 68); // rosso
+    } else {
+        doc.setTextColor(100);
+    }
+    doc.text(diffText, 130, 60);
+    doc.setTextColor(60);
+    
+    // Tabella dati
+    const tableData = filtered.map(c => {
+        const date = new Date(c.data);
+        const weekDay = date.toLocaleDateString('it-IT', { weekday: 'short' }).toUpperCase();
+        const day = date.getDate();
+        const monthShort = date.toLocaleDateString('it-IT', { month: 'short' });
+        
+        return [
+            `${weekDay} ${day} ${monthShort}`,
+            c.utente,
+            formatCurrencySimple(c.fiscale),
+            formatCurrencySimple(c.pos.totale),
+            formatCurrencySimple(c.cash.totale),
+            formatCurrencySimple(c.speseTotale),
+            formatCurrencySimple(c.granTotale),
+            formatCurrencySimple(c.differenza)
+        ];
+    });
+    
+    doc.autoTable({
+        startY: 75,
+        head: [['Data', 'Operatore', 'Fiscale', 'POS', 'Contanti', 'Spese', 'Totale', 'Diff.']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: {
+            fillColor: [37, 99, 235],
+            textColor: 255,
+            fontStyle: 'bold',
+            halign: 'center'
+        },
+        columnStyles: {
+            0: { halign: 'left' },
+            1: { halign: 'center' },
+            2: { halign: 'right' },
+            3: { halign: 'right' },
+            4: { halign: 'right' },
+            5: { halign: 'right' },
+            6: { halign: 'right' },
+            7: { halign: 'right' }
+        },
+        styles: {
+            fontSize: 8,
+            cellPadding: 3
+        },
+        didParseCell: function(data) {
+            // Colora la colonna differenza
+            if (data.column.index === 7 && data.section === 'body') {
+                const value = parseFloat(data.cell.raw.replace('€', '').replace(',', '.').trim());
+                if (value > 0) {
+                    data.cell.styles.textColor = [16, 185, 129];
+                } else if (value < 0) {
+                    data.cell.styles.textColor = [239, 68, 68];
+                }
+            }
+        }
+    });
+    
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(150);
+        doc.text(`Generato il ${new Date().toLocaleDateString('it-IT')} - Pagina ${i} di ${pageCount}`, 105, 290, { align: 'center' });
+    }
+    
+    // Download
+    const filename = `Chiusure_Skalette_${monthName}_${year}.pdf`;
+    doc.save(filename);
+    
+    showToast(`PDF esportato: ${filename}`, 'success');
+}
+
+// Helper per formattare valuta senza simbolo per tabella
+function formatCurrencySimple(amount) {
+    return '€ ' + amount.toFixed(2).replace('.', ',');
+}
+
 // CHANGE PIN
 async function changePin() {
     const currentPinInput = document.getElementById('currentPin').value;
@@ -1021,3 +1182,6 @@ async function changePin() {
 // Esponi funzioni globali necessarie per onclick inline
 window.removeSpesa = removeSpesa;
 window.showDetail = showDetail;
+window.editChiusuraDate = editChiusuraDate;
+window.editChiusura = editChiusura;
+window.deleteChiusura = deleteChiusura;

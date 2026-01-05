@@ -15,6 +15,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- jsPDF per export PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -249,7 +252,10 @@
                             <input type="month" id="meseFilter">
                         </div>
                         <button id="exportBtn" class="btn-export">
-                            <i class="fas fa-file-export"></i> Esporta CSV
+                            <i class="fas fa-file-export"></i> CSV
+                        </button>
+                        <button id="exportPdfBtn" class="btn-export btn-pdf">
+                            <i class="fas fa-file-pdf"></i> PDF
                         </button>
                     </div>
                 </div>
@@ -284,6 +290,13 @@
                         <div class="summary-info">
                             <span class="summary-value" id="mediaGiornaliera">€ 0.00</span>
                             <span class="summary-label">Media Giornaliera</span>
+                        </div>
+                    </div>
+                    <div class="summary-card diff-card">
+                        <i class="fas fa-balance-scale"></i>
+                        <div class="summary-info">
+                            <span class="summary-value" id="totaleDifferenza">€ 0.00</span>
+                            <span class="summary-label">Differenza Totale</span>
                         </div>
                     </div>
                 </div>
