@@ -374,6 +374,44 @@ header {
     color: var(--light);
 }
 
+/* Date Selector */
+.date-selector {
+    margin-top: 10px;
+}
+
+.date-input {
+    background: var(--input-bg);
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.date-input:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+body.light-theme .date-input::-webkit-calendar-picker-indicator {
+    filter: none;
+}
+
+.date-hint {
+    display: block;
+    color: var(--warning);
+    font-size: 0.85rem;
+    margin-top: 8px;
+}
+
 /* FORM SECTIONS */
 .form-section {
     background: rgba(30, 41, 59, 0.6);
@@ -1017,10 +1055,38 @@ header {
     justify-content: space-between;
     padding: 12px 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .detail-row:last-child {
     border-bottom: none;
+}
+
+.edit-date-row {
+    background: rgba(37, 99, 235, 0.1);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.btn-edit-date {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: background 0.3s;
+}
+
+.btn-edit-date:hover {
+    background: var(--primary-dark);
 }
 
 .detail-label {
@@ -1070,6 +1136,68 @@ header {
     font-size: 2rem;
     font-weight: 700;
     color: var(--success);
+}
+
+/* Modal Actions */
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-edit-chiusura {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+    font-weight: 500;
+}
+
+.btn-edit-chiusura:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+.btn-delete-chiusura {
+    background: transparent;
+    color: var(--danger);
+    border: 2px solid var(--danger);
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s;
+    font-weight: 500;
+}
+
+.btn-delete-chiusura:hover {
+    background: var(--danger);
+    color: white;
+}
+
+/* Editing state */
+#salvaChiusura.editing {
+    background: var(--warning);
+    animation: pulse-warning 1.5s infinite;
+}
+
+@keyframes pulse-warning {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+    50% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
 }
 
 /* RESPONSIVE */
@@ -1202,6 +1330,14 @@ header {
 
 .toast.error i {
     color: var(--danger);
+}
+
+.toast.info {
+    border-color: var(--warning);
+}
+
+.toast.info i {
+    color: var(--warning);
 }
 
 .toast i {

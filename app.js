@@ -38,7 +38,6 @@ const logoutBtn = document.getElementById('logoutBtn');
 const tabButtons = document.querySelectorAll('.tab-btn');
 const chiusuraTab = document.getElementById('chiusuraTab');
 const storicoTab = document.getElementById('storicoTab');
-const todayDate = document.getElementById('todayDate');
 const meseFilter = document.getElementById('meseFilter');
 const themeToggle = document.getElementById('themeToggle');
 const settingsBtn = document.getElementById('settingsBtn');
@@ -108,9 +107,10 @@ function toggleTheme() {
 }
 
 function initializeApp() {
-    // Imposta data odierna
+    // Imposta data odierna nel selettore
     const today = new Date();
-    todayDate.textContent = formatDate(today);
+    const todayStr = today.toISOString().split('T')[0];
+    document.getElementById('chiusuraDate').value = todayStr;
     
     // Imposta filtro mese corrente
     meseFilter.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
@@ -363,12 +363,21 @@ function salvaChiusura() {
     const posTotale = pos1 + pos2;
     const granTotale = cashTotale + speseTotale + posTotale;
     
-    // Controlla se esiste già una chiusura per oggi
-    const today = new Date().toISOString().split('T')[0];
-    const existingIndex = chiusure.findIndex(c => c.data === today);
+    // Usa la data selezionata dall'utente
+    const selectedDate = document.getElementById('chiusuraDate').value;
+    
+    // Se stiamo modificando una chiusura esistente, usa quell'ID
+    // Altrimenti controlla se esiste già una chiusura per la data selezionata
+    let targetId = editingChiusuraId;
+    if (!targetId) {
+        const existingIndex = chiusure.findIndex(c => c.data === selectedDate);
+        if (existingIndex >= 0) {
+            targetId = chiusure[existingIndex].id;
+        }
+    }
     
     const chiusura = {
-        data: today,
+        data: selectedDate,
         utente: currentUser,
         timestamp: new Date().toISOString(),
         fiscale,
@@ -389,15 +398,18 @@ function salvaChiusura() {
     };
     
     // Salva su Firebase
-    saveChiusuraToFirebase(chiusura, existingIndex >= 0 ? chiusure[existingIndex].id : null);
+    saveChiusuraToFirebase(chiusura, targetId);
 }
 
 async function saveChiusuraToFirebase(chiusura, existingId) {
     try {
         if (existingId) {
-            // Aggiorna esistente
-            if (!confirm('Esiste già una chiusura per oggi. Vuoi sovrascriverla?')) {
-                return;
+            // Stiamo modificando? Non chiedere conferma
+            if (!editingChiusuraId) {
+                // Solo se non stiamo modificando esplicitamente, chiedi conferma
+                if (!confirm('Esiste già una chiusura per questa data. Vuoi sovrascriverla?')) {
+                    return;
+                }
             }
             await db.collection('chiusure').doc(existingId).set(chiusura);
         } else {
@@ -428,9 +440,15 @@ function resetForm() {
     document.getElementById('speseContainer').innerHTML = '';
     calculateTotals();
     
-    // Aggiorna data
+    // Aggiorna data al selettore
     const today = new Date();
-    todayDate.textContent = formatDate(today);
+    document.getElementById('chiusuraDate').value = today.toISOString().split('T')[0];
+    
+    // Reset stato editing
+    editingChiusuraId = null;
+    const salvaBtn = document.getElementById('salvaChiusura');
+    salvaBtn.innerHTML = '<i class="fas fa-save"></i> Salva Chiusura';
+    salvaBtn.classList.remove('editing');
 }
 
 // STORICO FUNCTIONS
@@ -525,9 +543,12 @@ function showDetail(data) {
     const bill200 = chiusura.cash.bill200 || 0;
     
     document.getElementById('modalBody').innerHTML = `
-        <div class="detail-row">
+        <div class="detail-row edit-date-row">
             <span class="detail-label">Data</span>
             <span class="detail-value">${formattedDate}</span>
+            <button class="btn-edit-date" onclick="editChiusuraDate('${chiusura.data}')">
+                <i class="fas fa-edit"></i> Modifica Data
+            </button>
         </div>
         <div class="detail-row">
             <span class="detail-label">Operatore</span>
@@ -590,6 +611,14 @@ function showDetail(data) {
             <span class="detail-label">Differenza (Gran Tot - Fiscale)</span>
             <span class="detail-value ${differenzaClass}">${formatCurrency(chiusura.differenza)}</span>
         </div>
+        <div class="modal-actions">
+            <button class="btn-edit-chiusura" onclick="editChiusura('${chiusura.data}')">
+                <i class="fas fa-edit"></i> Modifica Chiusura
+            </button>
+            <button class="btn-delete-chiusura" onclick="deleteChiusura('${chiusura.data}')">
+                <i class="fas fa-trash"></i> Elimina
+            </button>
+        </div>
     `;
     
     document.getElementById('detailModal').classList.add('active');
@@ -597,6 +626,125 @@ function showDetail(data) {
 
 function closeModal() {
     document.getElementById('detailModal').classList.remove('active');
+}
+
+// Modifica data di una chiusura esistente
+async function editChiusuraDate(oldDate) {
+    const chiusura = chiusure.find(c => c.data === oldDate);
+    if (!chiusura) return;
+    
+    const newDate = prompt('Inserisci la nuova data (formato YYYY-MM-DD):', oldDate);
+    if (!newDate || newDate === oldDate) return;
+    
+    // Verifica formato data
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
+        showToast('Formato data non valido. Usa YYYY-MM-DD', 'error');
+        return;
+    }
+    
+    // Verifica se esiste già una chiusura per quella data
+    const existing = chiusure.find(c => c.data === newDate);
+    if (existing) {
+        if (!confirm(`Esiste già una chiusura per il ${newDate}. Vuoi sovrascriverla?`)) {
+            return;
+        }
+        // Elimina la chiusura esistente
+        await db.collection('chiusure').doc(existing.id).delete();
+    }
+    
+    try {
+        // Aggiorna la data della chiusura
+        await db.collection('chiusure').doc(chiusura.id).update({ data: newDate });
+        showToast('Data modificata con successo!', 'success');
+        closeModal();
+        await loadChiusureFromFirebase();
+    } catch (error) {
+        console.error('Errore modifica data:', error);
+        showToast('Errore nella modifica', 'error');
+    }
+}
+
+// Variabile per tracciare se stiamo modificando una chiusura esistente
+let editingChiusuraId = null;
+
+// Modifica chiusura completa
+function editChiusura(data) {
+    const chiusura = chiusure.find(c => c.data === data);
+    if (!chiusura) return;
+    
+    // Salva l'ID della chiusura che stiamo modificando
+    editingChiusuraId = chiusura.id;
+    
+    // Chiudi il modal
+    closeModal();
+    
+    // Vai al tab chiusura
+    switchTab('chiusura');
+    
+    // Carica i dati nel form
+    document.getElementById('chiusuraDate').value = chiusura.data;
+    document.getElementById('fiscale').value = chiusura.fiscale || '';
+    document.getElementById('pos1').value = chiusura.pos?.pos1 || '';
+    document.getElementById('pos2').value = chiusura.pos?.pos2 || '';
+    document.getElementById('bill5').value = chiusura.cash?.bill5 || '';
+    document.getElementById('bill10').value = chiusura.cash?.bill10 || '';
+    document.getElementById('bill20').value = chiusura.cash?.bill20 || '';
+    document.getElementById('bill50').value = chiusura.cash?.bill50 || '';
+    document.getElementById('bill100').value = chiusura.cash?.bill100 || '';
+    document.getElementById('bill200').value = chiusura.cash?.bill200 || '';
+    
+    // Carica le spese
+    const speseContainer = document.getElementById('speseContainer');
+    speseContainer.innerHTML = '';
+    if (chiusura.spese && chiusura.spese.length > 0) {
+        chiusura.spese.forEach(spesa => {
+            const row = document.createElement('div');
+            row.className = 'spesa-item';
+            row.innerHTML = `
+                <input type="text" class="spesa-nota" placeholder="Descrizione spesa..." value="${spesa.nota || ''}">
+                <input type="number" class="spesa-importo" step="0.01" placeholder="0.00" value="${spesa.importo || ''}">
+                <button class="btn-remove-spesa" onclick="removeSpesa(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            speseContainer.appendChild(row);
+            row.querySelector('.spesa-importo').addEventListener('input', calculateTotals);
+        });
+    }
+    
+    // Aggiorna i totali
+    calculateTotals();
+    
+    // Mostra indicatore che stiamo modificando
+    showToast('Modifica chiusura caricata. Salva per confermare le modifiche.', 'info');
+    
+    // Cambia testo del pulsante salva
+    const salvaBtn = document.getElementById('salvaChiusura');
+    salvaBtn.innerHTML = '<i class="fas fa-save"></i> Aggiorna Chiusura';
+    salvaBtn.classList.add('editing');
+}
+
+// Elimina chiusura
+async function deleteChiusura(data) {
+    const chiusura = chiusure.find(c => c.data === data);
+    if (!chiusura) return;
+    
+    const date = new Date(data);
+    const formattedDate = formatDate(date);
+    
+    if (!confirm(`Sei sicuro di voler eliminare la chiusura del ${formattedDate}?\n\nQuesta azione non può essere annullata.`)) {
+        return;
+    }
+    
+    try {
+        await db.collection('chiusure').doc(chiusura.id).delete();
+        showToast('Chiusura eliminata', 'success');
+        closeModal();
+        await loadChiusureFromFirebase();
+    } catch (error) {
+        console.error('Errore eliminazione:', error);
+        showToast('Errore durante l\'eliminazione', 'error');
+    }
 }
 
 // UTILITY FUNCTIONS
@@ -619,8 +767,13 @@ function formatDate(date) {
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
+    
+    let icon = 'check-circle';
+    if (type === 'error') icon = 'exclamation-circle';
+    else if (type === 'info') icon = 'info-circle';
+    
     toast.innerHTML = `
-        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'}"></i>
+        <i class="fas fa-${icon}"></i>
         <span>${message}</span>
     `;
     document.body.appendChild(toast);
