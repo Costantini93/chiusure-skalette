@@ -162,6 +162,9 @@ function setupEventListeners() {
     // Aggiungi spesa
     document.getElementById('addSpesa').addEventListener('click', addSpesaRow);
     
+    // Aggiungi fattura
+    document.getElementById('addFattura').addEventListener('click', addFatturaRow);
+    
     // Salva chiusura
     document.getElementById('salvaChiusura').addEventListener('click', salvaChiusura);
     
@@ -297,13 +300,24 @@ function calculateTotals() {
     });
     document.getElementById('speseTotale').textContent = formatCurrency(speseTotale);
     
+    // Fatture
+    let fattureTotale = 0;
+    document.querySelectorAll('.fattura-importo').forEach(input => {
+        fattureTotale += parseFloat(input.value) || 0;
+    });
+    document.getElementById('fattureTotale').textContent = formatCurrency(fattureTotale);
+    
+    // Fiscale + Fatture
+    const fiscale = parseFloat(document.getElementById('fiscale').value) || 0;
+    const fiscalePlusFatture = fiscale + fattureTotale;
+    document.getElementById('fiscalePlusFatture').innerHTML = '<strong>' + formatCurrency(fiscalePlusFatture) + '</strong>';
+    
     // Gran Totale
     const granTotale = cashTotale + speseTotale + posTotale;
     document.getElementById('granTotale').textContent = formatCurrency(granTotale);
     
-    // Differenza
-    const fiscale = parseFloat(document.getElementById('fiscale').value) || 0;
-    const differenza = granTotale - fiscale;
+    // Differenza (ora usa fiscale + fatture)
+    const differenza = granTotale - fiscalePlusFatture;
     const differenzaEl = document.getElementById('differenza');
     differenzaEl.textContent = formatCurrency(differenza);
     
@@ -340,6 +354,29 @@ function removeSpesa(btn) {
     calculateTotals();
 }
 
+function addFatturaRow() {
+    const container = document.getElementById('fattureContainer');
+    const row = document.createElement('div');
+    row.className = 'fattura-item';
+    row.innerHTML = `
+        <input type="text" class="fattura-nota" placeholder="Descrizione fattura...">
+        <input type="number" class="fattura-importo" step="0.01" placeholder="0.00">
+        <button class="btn-remove-fattura" onclick="removeFattura(this)">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    container.appendChild(row);
+    
+    // Aggiungi event listener per calcolo
+    row.querySelector('.fattura-importo').addEventListener('input', calculateTotals);
+    row.querySelector('.fattura-nota').focus();
+}
+
+function removeFattura(btn) {
+    btn.closest('.fattura-item').remove();
+    calculateTotals();
+}
+
 function salvaChiusura() {
     const fiscale = parseFloat(document.getElementById('fiscale').value) || 0;
     const pos1 = parseFloat(document.getElementById('pos1').value) || 0;
@@ -361,10 +398,22 @@ function salvaChiusura() {
         }
     });
     
+    // Raccogli fatture
+    const fatture = [];
+    document.querySelectorAll('.fattura-item').forEach(item => {
+        const nota = item.querySelector('.fattura-nota').value;
+        const importo = parseFloat(item.querySelector('.fattura-importo').value) || 0;
+        if (nota || importo > 0) {
+            fatture.push({ nota, importo });
+        }
+    });
+    
     const speseTotale = spese.reduce((sum, s) => sum + s.importo, 0);
+    const fattureTotale = fatture.reduce((sum, f) => sum + f.importo, 0);
     const cashTotale = (bill5 * 5) + (bill10 * 10) + (bill20 * 20) + (bill50 * 50) + (bill100 * 100) + (bill200 * 200);
     const posTotale = pos1 + pos2;
     const granTotale = cashTotale + speseTotale + posTotale;
+    const fiscaleTotale = fiscale + fattureTotale; // Fiscale + Fatture
     
     // Usa la data selezionata dall'utente
     const selectedDate = document.getElementById('chiusuraDate').value;
@@ -384,6 +433,9 @@ function salvaChiusura() {
         utente: currentUser,
         timestamp: new Date().toISOString(),
         fiscale,
+        fatture,
+        fattureTotale,
+        fiscaleTotale, // fiscale + fatture
         pos: { pos1, pos2, totale: posTotale },
         cash: {
             bill5,
@@ -397,7 +449,7 @@ function salvaChiusura() {
         spese,
         speseTotale,
         granTotale,
-        differenza: granTotale - fiscale
+        differenza: granTotale - fiscaleTotale // Ora usa fiscale + fatture
     };
     
     // Salva su Firebase
@@ -441,6 +493,7 @@ function resetForm() {
     document.getElementById('bill100').value = '';
     document.getElementById('bill200').value = '';
     document.getElementById('speseContainer').innerHTML = '';
+    document.getElementById('fattureContainer').innerHTML = '';
     calculateTotals();
     
     // Aggiorna data al selettore
@@ -553,12 +606,32 @@ function showDetail(data) {
         `;
     }
     
+    // Fatture
+    let fattureHTML = '';
+    if (chiusura.fatture && chiusura.fatture.length > 0) {
+        fattureHTML = `
+            <div class="detail-section">
+                <h4><i class="fas fa-file-invoice"></i> Fatture</h4>
+                ${chiusura.fatture.map(f => `
+                    <div class="fattura-detail">
+                        <span>${f.nota || 'Fattura senza descrizione'}</span>
+                        <span>${formatCurrency(f.importo)}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+    
     const differenzaClass = chiusura.differenza > 0 ? 'positive' : (chiusura.differenza < 0 ? 'negative' : 'zero');
     
     // Supporto per vecchi dati (coins) e nuovi (bill5, bill100, bill200)
     const bill5 = chiusura.cash.bill5 || 0;
     const bill100 = chiusura.cash.bill100 || 0;
     const bill200 = chiusura.cash.bill200 || 0;
+    
+    // Supporto per dati vecchi senza fatture
+    const fattureTotale = chiusura.fattureTotale || 0;
+    const fiscaleTotale = chiusura.fiscaleTotale || chiusura.fiscale;
     
     document.getElementById('modalBody').innerHTML = `
         <div class="detail-row edit-date-row">
@@ -621,12 +694,23 @@ function showDetail(data) {
             <span class="detail-value">${formatCurrency(chiusura.speseTotale)}</span>
         </div>
         ${speseHTML}
+        ${fattureHTML}
+        ${fattureTotale > 0 ? `
+        <div class="detail-row">
+            <span class="detail-label">Totale Fatture</span>
+            <span class="detail-value">${formatCurrency(fattureTotale)}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label"><strong>Fiscale + Fatture</strong></span>
+            <span class="detail-value"><strong>${formatCurrency(fiscaleTotale)}</strong></span>
+        </div>
+        ` : ''}
         <div class="detail-gran-total">
             <div class="label">GRAN TOTALE</div>
             <div class="value">${formatCurrency(chiusura.granTotale)}</div>
         </div>
         <div class="detail-row" style="margin-top: 15px;">
-            <span class="detail-label">Differenza (Gran Tot - Fiscale)</span>
+            <span class="detail-label">Differenza (Gran Tot - ${fattureTotale > 0 ? 'Fiscale+Fatture' : 'Fiscale'})</span>
             <span class="detail-value ${differenzaClass}">${formatCurrency(chiusura.differenza)}</span>
         </div>
         <div class="modal-actions">
@@ -727,6 +811,25 @@ function editChiusura(data) {
             `;
             speseContainer.appendChild(row);
             row.querySelector('.spesa-importo').addEventListener('input', calculateTotals);
+        });
+    }
+    
+    // Carica le fatture
+    const fattureContainer = document.getElementById('fattureContainer');
+    fattureContainer.innerHTML = '';
+    if (chiusura.fatture && chiusura.fatture.length > 0) {
+        chiusura.fatture.forEach(fattura => {
+            const row = document.createElement('div');
+            row.className = 'fattura-item';
+            row.innerHTML = `
+                <input type="text" class="fattura-nota" placeholder="Descrizione fattura..." value="${fattura.nota || ''}">
+                <input type="number" class="fattura-importo" step="0.01" placeholder="0.00" value="${fattura.importo || ''}">
+                <button class="btn-remove-fattura" onclick="removeFattura(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            fattureContainer.appendChild(row);
+            row.querySelector('.fattura-importo').addEventListener('input', calculateTotals);
         });
     }
     

@@ -609,6 +609,74 @@ body.light-theme .date-input::-webkit-calendar-picker-indicator {
     color: white;
 }
 
+/* FATTURE */
+.fattura-item {
+    display: grid;
+    grid-template-columns: 1fr 120px 40px;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.fattura-item input {
+    padding: 12px 15px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--border-radius);
+    color: var(--light);
+    font-size: 1rem;
+}
+
+.fattura-item input:focus {
+    outline: none;
+    border-color: var(--success);
+}
+
+.fattura-item input[type="number"] {
+    text-align: right;
+}
+
+.btn-remove-fattura {
+    width: 40px;
+    height: 40px;
+    background: rgba(239, 68, 68, 0.2);
+    border: none;
+    border-radius: 8px;
+    color: var(--danger);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-remove-fattura:hover {
+    background: var(--danger);
+    color: white;
+}
+
+.section-hint {
+    font-size: 0.75rem;
+    color: var(--success);
+    margin-left: 10px;
+    font-weight: normal;
+}
+
+.fiscale-totale-row {
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: 8px;
+    padding: 10px 15px;
+    margin-top: 10px;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.fattura-detail {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 15px;
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: 6px;
+    margin-bottom: 5px;
+    border-left: 3px solid var(--success);
+}
+
 .btn-add {
     display: flex;
     align-items: center;
@@ -1261,6 +1329,10 @@ body.light-theme .date-input::-webkit-calendar-picker-indicator {
     }
     
     .spesa-item {
+        grid-template-columns: 1fr 100px 35px;
+    }
+    
+    .fattura-item {
         grid-template-columns: 1fr 100px 35px;
     }
     

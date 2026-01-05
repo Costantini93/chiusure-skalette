@@ -120,6 +120,29 @@
                     </div>
                 </div>
 
+                <!-- Fatture -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <i class="fas fa-file-invoice"></i>
+                        <h3>Fatture</h3>
+                        <span class="section-hint">(Verranno aggiunte al fiscale)</span>
+                    </div>
+                    <div id="fattureContainer">
+                        <!-- Fatture verranno aggiunte qui -->
+                    </div>
+                    <button id="addFattura" class="btn-add">
+                        <i class="fas fa-plus"></i> Aggiungi Fattura
+                    </button>
+                    <div class="subtotal">
+                        <span>Totale Fatture:</span>
+                        <span id="fattureTotale">€ 0.00</span>
+                    </div>
+                    <div class="subtotal fiscale-totale-row">
+                        <span><strong>Totale Fiscale + Fatture:</strong></span>
+                        <span id="fiscalePlusFatture"><strong>€ 0.00</strong></span>
+                    </div>
+                </div>
+
                 <!-- POS -->
                 <div class="form-section">
                     <div class="section-header">
@@ -229,7 +252,7 @@
                     <div class="differenza">
                         <div class="differenza-label">
                             <i class="fas fa-balance-scale"></i>
-                            <span>DIFFERENZA (Gran Totale - Fiscale)</span>
+                            <span>DIFFERENZA (Gran Totale - Fiscale - Fatture)</span>
                         </div>
                         <div class="differenza-value" id="differenza">€ 0.00</div>
                     </div>
