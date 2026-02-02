@@ -93,6 +93,10 @@
                 <i class="fas fa-history"></i>
                 <span>Storico</span>
             </button>
+            <button class="tab-btn" data-tab="anticipi" id="tabAnticipi" style="display: none;">
+                <i class="fas fa-hand-holding-usd"></i>
+                <span>Anticipi</span>
+            </button>
         </nav>
 
         <!-- Chiusura Tab -->
@@ -234,6 +238,24 @@
                     </div>
                 </div>
 
+                <!-- Anticipi -->
+                <div class="form-section anticipi-section">
+                    <div class="section-header">
+                        <i class="fas fa-hand-holding-usd"></i>
+                        <h3>Anticipi Dipendenti</h3>
+                    </div>
+                    <div id="anticipiContainer">
+                        <!-- Anticipi verranno aggiunti qui -->
+                    </div>
+                    <button id="addAnticipo" class="btn-add">
+                        <i class="fas fa-plus"></i> Aggiungi Anticipo
+                    </button>
+                    <div class="subtotal">
+                        <span>Totale Anticipi:</span>
+                        <span id="anticipiTotale">€ 0.00</span>
+                    </div>
+                </div>
+
                 <!-- Gran Totale -->
                 <div class="form-section gran-total-section">
                     <div class="gran-total">
@@ -326,6 +348,31 @@
                 </div>
                 <div class="storico-list" id="storicoList">
                     <!-- Lista chiusure -->
+                </div>
+            </div>
+        </main>
+
+        <!-- Anticipi Tab (solo ALESSANDRO e PIETRO) -->
+        <main id="anticipiTab" class="tab-content">
+            <div class="anticipi-container">
+                <div class="anticipi-header">
+                    <h2><i class="fas fa-hand-holding-usd"></i> Gestione Anticipi</h2>
+                    <div class="filter-actions">
+                        <div class="filter-container">
+                            <label>Filtra per mese:</label>
+                            <input type="month" id="anticipiMeseFilter">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Riepilogo Anticipi per Dipendente -->
+                <div class="anticipi-summary" id="anticipiSummary">
+                    <!-- Riepilogo generato dinamicamente -->
+                </div>
+
+                <!-- Lista Anticipi -->
+                <div class="anticipi-list" id="anticipiList">
+                    <!-- Lista anticipi -->
                 </div>
             </div>
         </main>

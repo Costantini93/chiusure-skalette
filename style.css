@@ -1610,3 +1610,267 @@ body.light-theme .tabs {
 body.light-theme .modal-content {
     background: var(--bg-secondary);
 }
+/* ANTICIPI STYLES */
+.anticipo-item {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+
+.anticipo-item input {
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+}
+
+.anticipo-item .anticipo-dipendente {
+    flex: 2;
+}
+
+.anticipo-item .anticipo-importo {
+    flex: 1;
+    text-align: right;
+}
+
+.btn-remove-anticipo {
+    background: var(--danger);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-remove-anticipo:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+.anticipi-section {
+    border-left: 3px solid var(--warning);
+}
+
+.anticipi-section .section-header i {
+    color: var(--warning);
+}
+
+/* Anticipi Tab Styles */
+.anticipi-container {
+    padding: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.anticipi-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.anticipi-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-primary);
+}
+
+.anticipi-header h2 i {
+    color: var(--warning);
+}
+
+.anticipi-summary {
+    background: var(--bg-card);
+    border-radius: var(--border-radius);
+    padding: 25px;
+    margin-bottom: 25px;
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+}
+
+.anticipi-summary-header {
+    margin-bottom: 20px;
+}
+
+.anticipi-summary-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-primary);
+}
+
+.anticipi-summary-header h3 i {
+    color: var(--warning);
+}
+
+.anticipi-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.anticipo-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.anticipo-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.anticipo-card-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--warning), #d97706);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.anticipo-card-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.anticipo-card-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.anticipo-card-amount {
+    color: var(--warning);
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.anticipi-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: linear-gradient(135deg, var(--warning), #d97706);
+    border-radius: var(--border-radius);
+    color: white;
+    font-size: 1.1rem;
+}
+
+.anticipi-total strong {
+    font-size: 1.3rem;
+}
+
+.no-anticipi {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+}
+
+.no-anticipi i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.anticipi-list {
+    background: var(--bg-card);
+    border-radius: var(--border-radius);
+    padding: 25px;
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+}
+
+.anticipi-list-header {
+    margin-bottom: 20px;
+}
+
+.anticipi-list-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-primary);
+}
+
+.anticipi-list-header h3 i {
+    color: var(--primary);
+}
+
+.anticipi-table {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.anticipi-table-header {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr 1.5fr;
+    padding: 12px 15px;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
+.anticipi-table-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr 1.5fr;
+    padding: 15px;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    align-items: center;
+    transition: background 0.2s;
+}
+
+.anticipi-table-row:hover {
+    background: var(--border-color);
+}
+
+.anticipi-table-row .amount {
+    font-weight: 600;
+    color: var(--warning);
+}
+
+.anticipi-table-row .registrato-da {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+@media (max-width: 768px) {
+    .anticipi-table-header,
+    .anticipi-table-row {
+        grid-template-columns: 1fr 1fr;
+        gap: 5px;
+    }
+    
+    .anticipi-table-header span:nth-child(4),
+    .anticipi-table-row span:nth-child(4) {
+        display: none;
+    }
+    
+    .anticipi-cards {
+        grid-template-columns: 1fr;
+    }
+}

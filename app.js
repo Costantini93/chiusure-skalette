@@ -23,6 +23,7 @@ const ADMIN_PINS = {
 let currentUser = null;
 let chiusure = [];
 let userPins = {};
+let anticipi = []; // Nuovo array per gli anticipi
 
 // Elementi DOM
 const loginScreen = document.getElementById('loginScreen');
@@ -38,6 +39,7 @@ const logoutBtn = document.getElementById('logoutBtn');
 const tabButtons = document.querySelectorAll('.tab-btn');
 const chiusuraTab = document.getElementById('chiusuraTab');
 const storicoTab = document.getElementById('storicoTab');
+const anticipiTab = document.getElementById('anticipiTab'); // Nuovo tab
 const meseFilter = document.getElementById('meseFilter');
 const themeToggle = document.getElementById('themeToggle');
 const settingsBtn = document.getElementById('settingsBtn');
@@ -171,6 +173,12 @@ function setupEventListeners() {
     // Filtro mese
     meseFilter.addEventListener('change', renderStorico);
     
+    // Filtro mese anticipi
+    document.getElementById('anticipiMeseFilter').addEventListener('change', renderAnticipi);
+    
+    // Aggiungi anticipo
+    document.getElementById('addAnticipo').addEventListener('click', addAnticipoRow);
+    
     // Modal
     document.getElementById('closeModal').addEventListener('click', closeModal);
     document.getElementById('detailModal').addEventListener('click', (e) => {
@@ -215,7 +223,15 @@ function handleLogin() {
         resetForm();
         renderStorico();
         
-        // Pietro può vedere solo storico
+        // Mostra tab anticipi solo a ALESSANDRO e PIETRO
+        if (user === 'ALESSANDRO' || user === 'PIETRO') {
+            document.getElementById('tabAnticipi').style.display = 'flex';
+            renderAnticipi();
+        } else {
+            document.getElementById('tabAnticipi').style.display = 'none';
+        }
+        
+        // Pietro può vedere solo storico e anticipi
         if (user === 'PIETRO') {
             document.getElementById('tabChiusura').style.display = 'none';
             switchTab('storico');
@@ -243,6 +259,7 @@ function handleLogout() {
     resetForm();
     // Ripristina tab chiusura visibile per prossimo login
     document.getElementById('tabChiusura').style.display = 'flex';
+    document.getElementById('tabAnticipi').style.display = 'none';
     showToast('Logout effettuato', 'success');
 }
 
@@ -254,9 +271,13 @@ function switchTab(tab) {
     
     chiusuraTab.classList.toggle('active', tab === 'chiusura');
     storicoTab.classList.toggle('active', tab === 'storico');
+    anticipiTab.classList.toggle('active', tab === 'anticipi');
     
     if (tab === 'storico') {
         renderStorico();
+    }
+    if (tab === 'anticipi') {
+        renderAnticipi();
     }
 }
 
@@ -299,6 +320,13 @@ function calculateTotals() {
         speseTotale += parseFloat(input.value) || 0;
     });
     document.getElementById('speseTotale').textContent = formatCurrency(speseTotale);
+    
+    // Anticipi
+    let anticipiTotale = 0;
+    document.querySelectorAll('.anticipo-importo').forEach(input => {
+        anticipiTotale += parseFloat(input.value) || 0;
+    });
+    document.getElementById('anticipiTotale').textContent = formatCurrency(anticipiTotale);
     
     // Fatture
     let fattureTotale = 0;
@@ -377,6 +405,30 @@ function removeFattura(btn) {
     calculateTotals();
 }
 
+// Funzioni per anticipi nel form di chiusura
+function addAnticipoRow() {
+    const container = document.getElementById('anticipiContainer');
+    const row = document.createElement('div');
+    row.className = 'anticipo-item';
+    row.innerHTML = `
+        <input type="text" class="anticipo-dipendente" placeholder="Nome dipendente...">
+        <input type="number" class="anticipo-importo" step="0.01" placeholder="0.00">
+        <button class="btn-remove-anticipo" onclick="removeAnticipo(this)">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    container.appendChild(row);
+    
+    // Aggiungi event listener per calcolo
+    row.querySelector('.anticipo-importo').addEventListener('input', calculateTotals);
+    row.querySelector('.anticipo-dipendente').focus();
+}
+
+function removeAnticipo(btn) {
+    btn.closest('.anticipo-item').remove();
+    calculateTotals();
+}
+
 function salvaChiusura() {
     const fiscale = parseFloat(document.getElementById('fiscale').value) || 0;
     const pos1 = parseFloat(document.getElementById('pos1').value) || 0;
@@ -407,6 +459,17 @@ function salvaChiusura() {
             fatture.push({ nota, importo });
         }
     });
+    
+    // Raccogli anticipi
+    const anticipiChiusura = [];
+    document.querySelectorAll('.anticipo-item').forEach(item => {
+        const dipendente = item.querySelector('.anticipo-dipendente').value.trim();
+        const importo = parseFloat(item.querySelector('.anticipo-importo').value) || 0;
+        if (dipendente && importo > 0) {
+            anticipiChiusura.push({ dipendente, importo });
+        }
+    });
+    const anticipiTotale = anticipiChiusura.reduce((sum, a) => sum + a.importo, 0);
     
     const speseTotale = spese.reduce((sum, s) => sum + s.importo, 0);
     const fattureTotale = fatture.reduce((sum, f) => sum + f.importo, 0);
@@ -448,6 +511,8 @@ function salvaChiusura() {
         },
         spese,
         speseTotale,
+        anticipi: anticipiChiusura,
+        anticipiTotale,
         granTotale,
         differenza: granTotale - fiscaleTotale // Ora usa fiscale + fatture
     };
@@ -494,6 +559,7 @@ function resetForm() {
     document.getElementById('bill200').value = '';
     document.getElementById('speseContainer').innerHTML = '';
     document.getElementById('fattureContainer').innerHTML = '';
+    document.getElementById('anticipiContainer').innerHTML = '';
     calculateTotals();
     
     // Aggiorna data al selettore
@@ -1293,7 +1359,114 @@ async function changePin() {
 
 // Esponi funzioni globali necessarie per onclick inline
 window.removeSpesa = removeSpesa;
+window.removeFattura = removeFattura;
+window.removeAnticipo = removeAnticipo;
 window.showDetail = showDetail;
 window.editChiusuraDate = editChiusuraDate;
 window.editChiusura = editChiusura;
 window.deleteChiusura = deleteChiusura;
+
+// ANTICIPI FUNCTIONS
+function renderAnticipi() {
+    const filterEl = document.getElementById('anticipiMeseFilter');
+    if (!filterEl.value) {
+        const today = new Date();
+        filterEl.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+    }
+    
+    const filterValue = filterEl.value;
+    const [year, month] = filterValue.split('-').map(Number);
+    
+    // Raccogli tutti gli anticipi dalle chiusure del mese
+    const anticipiMese = [];
+    chiusure.filter(c => {
+        const date = new Date(c.data);
+        return date.getFullYear() === year && (date.getMonth() + 1) === month;
+    }).forEach(c => {
+        if (c.anticipi && c.anticipi.length > 0) {
+            c.anticipi.forEach(a => {
+                anticipiMese.push({
+                    ...a,
+                    data: c.data,
+                    registratoDa: c.utente
+                });
+            });
+        }
+    });
+    
+    // Calcola riepilogo per dipendente
+    const riepilogo = {};
+    anticipiMese.forEach(a => {
+        const nome = a.dipendente.toUpperCase();
+        if (!riepilogo[nome]) {
+            riepilogo[nome] = 0;
+        }
+        riepilogo[nome] += a.importo;
+    });
+    
+    // Render riepilogo
+    const summaryContainer = document.getElementById('anticipiSummary');
+    if (Object.keys(riepilogo).length === 0) {
+        summaryContainer.innerHTML = `
+            <div class="no-anticipi">
+                <i class="fas fa-info-circle"></i>
+                <p>Nessun anticipo registrato per questo mese</p>
+            </div>
+        `;
+    } else {
+        const totaleGenerale = Object.values(riepilogo).reduce((sum, v) => sum + v, 0);
+        summaryContainer.innerHTML = `
+            <div class="anticipi-summary-header">
+                <h3><i class="fas fa-users"></i> Riepilogo per Dipendente</h3>
+            </div>
+            <div class="anticipi-cards">
+                ${Object.entries(riepilogo).map(([nome, totale]) => `
+                    <div class="anticipo-card">
+                        <div class="anticipo-card-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="anticipo-card-info">
+                            <span class="anticipo-card-name">${nome}</span>
+                            <span class="anticipo-card-amount">${formatCurrency(totale)}</span>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="anticipi-total">
+                <span>Totale Anticipi Mese:</span>
+                <strong>${formatCurrency(totaleGenerale)}</strong>
+            </div>
+        `;
+    }
+    
+    // Render lista dettagliata
+    const listContainer = document.getElementById('anticipiList');
+    if (anticipiMese.length === 0) {
+        listContainer.innerHTML = '';
+    } else {
+        // Ordina per data decrescente
+        anticipiMese.sort((a, b) => new Date(b.data) - new Date(a.data));
+        
+        listContainer.innerHTML = `
+            <div class="anticipi-list-header">
+                <h3><i class="fas fa-list"></i> Dettaglio Anticipi</h3>
+            </div>
+            <div class="anticipi-table">
+                <div class="anticipi-table-header">
+                    <span>Data</span>
+                    <span>Dipendente</span>
+                    <span>Importo</span>
+                    <span>Registrato da</span>
+                </div>
+                ${anticipiMese.map(a => `
+                    <div class="anticipi-table-row">
+                        <span>${formatDate(a.data)}</span>
+                        <span>${a.dipendente}</span>
+                        <span class="amount">${formatCurrency(a.importo)}</span>
+                        <span class="registrato-da">${a.registratoDa}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+}
