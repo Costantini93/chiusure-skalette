@@ -340,8 +340,8 @@ function calculateTotals() {
     const fiscalePlusFatture = fiscale + fattureTotale;
     document.getElementById('fiscalePlusFatture').innerHTML = '<strong>' + formatCurrency(fiscalePlusFatture) + '</strong>';
     
-    // Gran Totale
-    const granTotale = cashTotale + speseTotale + posTotale;
+    // Gran Totale (include anche anticipi come spese)
+    const granTotale = cashTotale + speseTotale + anticipiTotale + posTotale;
     document.getElementById('granTotale').textContent = formatCurrency(granTotale);
     
     // Differenza (ora usa fiscale + fatture)
