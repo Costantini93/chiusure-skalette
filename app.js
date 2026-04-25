@@ -16,7 +16,8 @@ const db = firebase.firestore();
 const ADMIN_PINS = {
     'LUCA': '1111',
     'PIETRO': '2222',
-    'ALESSANDRO': '3333'
+    'ALESSANDRO': '3333',
+    'JONATHAN': '4444'
 };
 
 // Stato applicazione
@@ -223,8 +224,8 @@ function handleLogin() {
         resetForm();
         renderStorico();
         
-        // Mostra tab anticipi solo a ALESSANDRO e PIETRO
-        if (user === 'ALESSANDRO' || user === 'PIETRO') {
+        // Mostra tab anticipi solo a ALESSANDRO, JONATHAN e PIETRO
+        if (user === 'ALESSANDRO' || user === 'JONATHAN' || user === 'PIETRO') {
             document.getElementById('tabAnticipi').style.display = 'flex';
             renderAnticipi();
         } else {
