@@ -17,7 +17,8 @@ const ADMIN_PINS = {
     'LUCA': '1111',
     'PIETRO': '2222',
     'ALESSANDRO': '3333',
-    'JONATHAN': '4444'
+    'JONATHAN': '4444',
+    'SOFIA': '5555'
 };
 
 // Stato applicazione
@@ -238,6 +239,18 @@ function handleLogin() {
             switchTab('storico');
         } else {
             document.getElementById('tabChiusura').style.display = 'flex';
+        }
+        
+        // SOFIA: solo chiusura, niente storico/anticipi/impostazioni
+        const tabStorico = document.getElementById('tabStorico');
+        const settingsBtnEl = document.getElementById('settingsBtn');
+        if (user === 'SOFIA') {
+            tabStorico.style.display = 'none';
+            settingsBtnEl.style.display = 'none';
+            switchTab('chiusura');
+        } else {
+            tabStorico.style.display = 'flex';
+            settingsBtnEl.style.display = '';
         }
     } else {
         showToast('PIN non corretto!', 'error');

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'skalette-v4';
+const CACHE_NAME = 'skalette-v5';
 const urlsToCache = [
   './',
   './index.html',
