@@ -14,9 +14,9 @@ const db = firebase.firestore();
 
 // Configurazione PIN per ogni admin (puoi cambiarli)
 const ADMIN_PINS = {
-    'LUCA': '1111',
+    'SILVIA': '1111',
     'PIETRO': '2222',
-    'ALESSANDRO': '3333',
+    'ANDREA': '3333',
     'JONATHAN': '4444',
     'SOFIA': '5555'
 };
@@ -225,8 +225,8 @@ function handleLogin() {
         resetForm();
         renderStorico();
         
-        // Mostra tab anticipi solo a ALESSANDRO, JONATHAN e PIETRO
-        if (user === 'ALESSANDRO' || user === 'JONATHAN' || user === 'PIETRO') {
+        // Mostra tab anticipi solo a PIETRO
+        if (user === 'PIETRO') {
             document.getElementById('tabAnticipi').style.display = 'flex';
             renderAnticipi();
         } else {

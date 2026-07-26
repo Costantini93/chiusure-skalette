@@ -5,7 +5,7 @@ App web per la gestione delle chiusure giornaliere del bar.
 ## Funzionalità
 
 ### 🔐 Accesso Admin
-- 3 utenti: LUCA, PIETRO, ALESSANDRO
+- 3 utenti: SILVIA, PIETRO, ANDREA
 - Autenticazione con PIN
 
 ### 💰 Nuova Chiusura
@@ -27,14 +27,14 @@ App web per la gestione delle chiusure giornaliere del bar.
 
 1. Apri `index.html` nel browser
 2. Seleziona il tuo nome
-3. Inserisci il PIN (default: LUCA=1111, PIETRO=2222, ALESSANDRO=3333)
+3. Inserisci il PIN (default: SILVIA=1111, PIETRO=2222, ANDREA=3333)
 4. Compila i dati della chiusura
 5. Clicca "Salva Chiusura"
 
 ## PIN Default
-- LUCA: `1111`
+- SILVIA: `1111`
 - PIETRO: `2222`
-- ALESSANDRO: `3333`
+- ANDREA: `3333`
 
 I PIN possono essere modificati nel file `app.js`.
 
