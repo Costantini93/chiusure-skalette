@@ -1,11 +1,14 @@
-# 🍸 SKALETTE - Sistema Chiusure Giornaliere
+# 🍸 SKALETTE & AMMIRAGLIO - Sistema Chiusure Giornaliere
 
-App web per la gestione delle chiusure giornaliere del bar.
+App web per la gestione delle chiusure giornaliere di due bar: **Skalette** e **Ammiraglio**.
 
 ## Funzionalità
 
 ### 🔐 Accesso Admin
-- 3 utenti: SILVIA, PIETRO, ANDREA
+- Ogni utente è assegnato a un locale ed entra direttamente nella sua sezione:
+  - **Skalette**: SILVIA, SOFIA, FEDERICO
+  - **Ammiraglio**: ANDREA, JONATHAN
+  - **PIETRO** gestisce entrambi i locali e può passare dall'uno all'altro con il selettore in alto
 - Autenticazione con PIN
 
 ### 💰 Nuova Chiusura
@@ -27,7 +30,7 @@ App web per la gestione delle chiusure giornaliere del bar.
 
 1. Apri `index.html` nel browser
 2. Seleziona il tuo nome
-3. Inserisci il PIN (default: SILVIA=1111, PIETRO=2222, ANDREA=3333)
+3. Inserisci il PIN
 4. Compila i dati della chiusura
 5. Clicca "Salva Chiusura"
 
@@ -35,6 +38,9 @@ App web per la gestione delle chiusure giornaliere del bar.
 - SILVIA: `1111`
 - PIETRO: `2222`
 - ANDREA: `3333`
+- JONATHAN: `4444`
+- SOFIA: `5555`
+- FEDERICO: `6666`
 
 I PIN possono essere modificati nel file `app.js`.
 
