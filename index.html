@@ -55,6 +55,10 @@
                         <i class="fas fa-user"></i>
                         <span>SOFIA</span>
                     </button>
+                    <button class="user-btn" data-user="FEDERICO">
+                        <i class="fas fa-user"></i>
+                        <span>FEDERICO</span>
+                    </button>
                 </div>
                 <div class="pin-input-container" style="display: none;">
                     <label>Inserisci PIN per <span id="selectedUser"></span></label>
@@ -73,7 +77,7 @@
         <header>
             <div class="header-left">
                 <i class="fas fa-cocktail"></i>
-                <h1>SKALETTE</h1>
+                <h1 id="appTitle">SKALETTE</h1>
             </div>
             <div class="header-right">
                 <button id="themeToggle" class="btn-icon" title="Cambia tema">
@@ -104,6 +108,16 @@
             <button class="tab-btn" data-tab="anticipi" id="tabAnticipi" style="display: none;">
                 <i class="fas fa-hand-holding-usd"></i>
                 <span>Anticipi</span>
+            </button>
+        </nav>
+
+        <!-- Selettore Locale (solo PIETRO, che gestisce entrambi i bar) -->
+        <nav class="bar-switcher-nav" id="barSwitcherNav" style="display: none;">
+            <button class="bar-btn active" data-bar="skalette">
+                <i class="fas fa-store"></i> Skalette
+            </button>
+            <button class="bar-btn" data-bar="ammiraglio">
+                <i class="fas fa-store"></i> Ammiraglio
             </button>
         </nav>
 

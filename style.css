@@ -1607,6 +1607,47 @@ body.light-theme .tabs {
     background: rgba(241, 245, 249, 0.8);
 }
 
+/* BAR SWITCHER (PIETRO) */
+.bar-switcher-nav {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 20px;
+    background: rgba(15, 23, 42, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.bar-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: transparent;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 20px;
+    color: var(--gray);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.bar-btn:hover {
+    border-color: var(--primary);
+    color: var(--light);
+}
+
+.bar-btn.active {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-color: var(--primary);
+    color: white;
+}
+
+body.light-theme .bar-switcher-nav {
+    background: rgba(241, 245, 249, 0.6);
+}
+
 body.light-theme .modal-content {
     background: var(--bg-secondary);
 }

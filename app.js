@@ -18,11 +18,28 @@ const ADMIN_PINS = {
     'PIETRO': '2222',
     'ANDREA': '3333',
     'JONATHAN': '4444',
-    'SOFIA': '5555'
+    'SOFIA': '5555',
+    'FEDERICO': '6666'
+};
+
+// A quale locale è assegnato ogni utente. 'both' = può vedere entrambi (Pietro)
+const BAR_USERS = {
+    'SILVIA': 'skalette',
+    'SOFIA': 'skalette',
+    'FEDERICO': 'skalette',
+    'ANDREA': 'ammiraglio',
+    'JONATHAN': 'ammiraglio',
+    'PIETRO': 'both'
+};
+
+const BAR_NAMES = {
+    'skalette': 'SKALETTE',
+    'ammiraglio': 'AMMIRAGLIO'
 };
 
 // Stato applicazione
 let currentUser = null;
+let currentBar = null; // 'skalette' | 'ammiraglio'
 let chiusure = [];
 let userPins = {};
 let anticipi = []; // Nuovo array per gli anticipi
@@ -46,6 +63,9 @@ const meseFilter = document.getElementById('meseFilter');
 const themeToggle = document.getElementById('themeToggle');
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsModal = document.getElementById('settingsModal');
+const appTitle = document.getElementById('appTitle');
+const barSwitcherNav = document.getElementById('barSwitcherNav');
+const barButtons = document.querySelectorAll('.bar-btn');
 
 // Inizializzazione
 document.addEventListener('DOMContentLoaded', () => {
@@ -140,7 +160,12 @@ function setupEventListeners() {
     
     // Logout
     logoutBtn.addEventListener('click', handleLogout);
-    
+
+    // Selettore locale (Pietro)
+    barButtons.forEach(btn => {
+        btn.addEventListener('click', () => switchBar(btn.dataset.bar));
+    });
+
     // Tabs
     tabButtons.forEach(btn => {
         btn.addEventListener('click', () => switchTab(btn.dataset.tab));
@@ -223,8 +248,20 @@ function handleLogin() {
         currentUserSpan.textContent = user;
         showToast('Accesso effettuato!', 'success');
         resetForm();
+
+        // Imposta il locale di competenza dell'utente
+        const userBar = BAR_USERS[user] || 'skalette';
+        if (userBar === 'both') {
+            // Pietro gestisce entrambi i bar: mostra il selettore
+            barSwitcherNav.style.display = 'flex';
+            setCurrentBar(currentBar || 'skalette');
+        } else {
+            barSwitcherNav.style.display = 'none';
+            setCurrentBar(userBar);
+        }
+
         renderStorico();
-        
+
         // Mostra tab anticipi solo a PIETRO
         if (user === 'PIETRO') {
             document.getElementById('tabAnticipi').style.display = 'flex';
@@ -267,6 +304,7 @@ function resetLogin() {
 
 function handleLogout() {
     currentUser = null;
+    currentBar = null;
     mainScreen.classList.remove('active');
     loginScreen.classList.add('active');
     resetLogin();
@@ -274,7 +312,26 @@ function handleLogout() {
     // Ripristina tab chiusura visibile per prossimo login
     document.getElementById('tabChiusura').style.display = 'flex';
     document.getElementById('tabAnticipi').style.display = 'none';
+    barSwitcherNav.style.display = 'none';
     showToast('Logout effettuato', 'success');
+}
+
+// BAR (LOCALE) FUNCTIONS
+function setCurrentBar(bar) {
+    currentBar = bar;
+    appTitle.textContent = BAR_NAMES[bar] || bar.toUpperCase();
+    barButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.bar === bar);
+    });
+}
+
+function switchBar(bar) {
+    if (bar === currentBar) return;
+    setCurrentBar(bar);
+    renderStorico();
+    if (currentUser === 'PIETRO') {
+        renderAnticipi();
+    }
 }
 
 // TAB FUNCTIONS
@@ -499,14 +556,15 @@ function salvaChiusura() {
     // Altrimenti controlla se esiste già una chiusura per la data selezionata
     let targetId = editingChiusuraId;
     if (!targetId) {
-        const existingIndex = chiusure.findIndex(c => c.data === selectedDate);
+        const existingIndex = chiusure.findIndex(c => c.data === selectedDate && (c.locale || 'skalette') === currentBar);
         if (existingIndex >= 0) {
             targetId = chiusure[existingIndex].id;
         }
     }
-    
+
     const chiusura = {
         data: selectedDate,
+        locale: currentBar,
         utente: currentUser,
         timestamp: new Date().toISOString(),
         fiscale,
@@ -595,10 +653,11 @@ function renderStorico() {
     const [year, month] = filterValue.split('-').map(Number);
     
     const filtered = chiusure.filter(c => {
+        if ((c.locale || 'skalette') !== currentBar) return false;
         const date = new Date(c.data);
         return date.getFullYear() === year && (date.getMonth() + 1) === month;
     });
-    
+
     // Aggiorna summary
     document.getElementById('totaleChiusure').textContent = filtered.length;
     const totaleMese = filtered.reduce((sum, c) => sum + c.granTotale, 0);
@@ -644,7 +703,7 @@ function renderStorico() {
         const weekDay = date.toLocaleDateString('it-IT', { weekday: 'short' }).toUpperCase();
         
         return `
-            <div class="storico-item" onclick="showDetail('${c.data}')">
+            <div class="storico-item" onclick="showDetail('${c.id}')">
                 <div class="storico-item-left">
                     <div class="storico-date">
                         <span class="weekday">${weekDay}</span>
@@ -664,8 +723,8 @@ function renderStorico() {
     }).join('');
 }
 
-function showDetail(data) {
-    const chiusura = chiusure.find(c => c.data === data);
+function showDetail(id) {
+    const chiusura = chiusure.find(c => c.id === id);
     if (!chiusura) return;
     
     const date = new Date(chiusura.data);
@@ -717,7 +776,7 @@ function showDetail(data) {
         <div class="detail-row edit-date-row">
             <span class="detail-label">Data</span>
             <span class="detail-value">${formattedDate}</span>
-            <button class="btn-edit-date" onclick="editChiusuraDate('${chiusura.data}')">
+            <button class="btn-edit-date" onclick="editChiusuraDate('${chiusura.id}')">
                 <i class="fas fa-edit"></i> Modifica Data
             </button>
         </div>
@@ -794,10 +853,10 @@ function showDetail(data) {
             <span class="detail-value ${differenzaClass}">${formatCurrency(chiusura.differenza)}</span>
         </div>
         <div class="modal-actions">
-            <button class="btn-edit-chiusura" onclick="editChiusura('${chiusura.data}')">
+            <button class="btn-edit-chiusura" onclick="editChiusura('${chiusura.id}')">
                 <i class="fas fa-edit"></i> Modifica Chiusura
             </button>
-            <button class="btn-delete-chiusura" onclick="deleteChiusura('${chiusura.data}')">
+            <button class="btn-delete-chiusura" onclick="deleteChiusura('${chiusura.id}')">
                 <i class="fas fa-trash"></i> Elimina
             </button>
         </div>
@@ -811,21 +870,23 @@ function closeModal() {
 }
 
 // Modifica data di una chiusura esistente
-async function editChiusuraDate(oldDate) {
-    const chiusura = chiusure.find(c => c.data === oldDate);
+async function editChiusuraDate(id) {
+    const chiusura = chiusure.find(c => c.id === id);
     if (!chiusura) return;
-    
+
+    const oldDate = chiusura.data;
+    const chiusuraLocale = chiusura.locale || 'skalette';
     const newDate = prompt('Inserisci la nuova data (formato YYYY-MM-DD):', oldDate);
     if (!newDate || newDate === oldDate) return;
-    
+
     // Verifica formato data
     if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
         showToast('Formato data non valido. Usa YYYY-MM-DD', 'error');
         return;
     }
-    
-    // Verifica se esiste già una chiusura per quella data
-    const existing = chiusure.find(c => c.data === newDate);
+
+    // Verifica se esiste già una chiusura per quella data nello stesso locale
+    const existing = chiusure.find(c => c.data === newDate && (c.locale || 'skalette') === chiusuraLocale && c.id !== chiusura.id);
     if (existing) {
         if (!confirm(`Esiste già una chiusura per il ${newDate}. Vuoi sovrascriverla?`)) {
             return;
@@ -850,8 +911,8 @@ async function editChiusuraDate(oldDate) {
 let editingChiusuraId = null;
 
 // Modifica chiusura completa
-function editChiusura(data) {
-    const chiusura = chiusure.find(c => c.data === data);
+function editChiusura(id) {
+    const chiusura = chiusure.find(c => c.id === id);
     if (!chiusura) return;
     
     // Salva l'ID della chiusura che stiamo modificando
@@ -926,11 +987,11 @@ function editChiusura(data) {
 }
 
 // Elimina chiusura
-async function deleteChiusura(data) {
-    const chiusura = chiusure.find(c => c.data === data);
+async function deleteChiusura(id) {
+    const chiusura = chiusure.find(c => c.id === id);
     if (!chiusura) return;
-    
-    const date = new Date(data);
+
+    const date = new Date(chiusura.data);
     const formattedDate = formatDate(date);
     
     if (!confirm(`Sei sicuro di voler eliminare la chiusura del ${formattedDate}?\n\nQuesta azione non può essere annullata.`)) {
@@ -1075,18 +1136,19 @@ function exportToCSV() {
     const [year, month] = filterValue.split('-').map(Number);
     
     let filtered = chiusure.filter(c => {
+        if ((c.locale || 'skalette') !== currentBar) return false;
         const date = new Date(c.data);
         return date.getFullYear() === year && (date.getMonth() + 1) === month;
     });
-    
+
     // Ordina per data crescente
     filtered = filtered.sort((a, b) => new Date(a.data) - new Date(b.data));
-    
+
     if (filtered.length === 0) {
         showToast('Nessun dato da esportare', 'error');
         return;
     }
-    
+
     // Intestazioni CSV
     const headers = [
         'Data',
@@ -1171,7 +1233,7 @@ function exportToCSV() {
     const link = document.createElement('a');
     const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 
                         'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
-    const filename = `Chiusure_Skalette_${monthNames[month-1]}_${year}.csv`;
+    const filename = `Chiusure_${BAR_NAMES[currentBar] || currentBar}_${monthNames[month-1]}_${year}.csv`;
     
     link.href = URL.createObjectURL(blob);
     link.download = filename;
@@ -1187,21 +1249,23 @@ function exportToPDF() {
     const [year, month] = filterValue.split('-').map(Number);
     
     let filtered = chiusure.filter(c => {
+        if ((c.locale || 'skalette') !== currentBar) return false;
         const date = new Date(c.data);
         return date.getFullYear() === year && (date.getMonth() + 1) === month;
     });
-    
+
     // Ordina per data crescente
     filtered = filtered.sort((a, b) => new Date(a.data) - new Date(b.data));
-    
+
     if (filtered.length === 0) {
         showToast('Nessun dato da esportare', 'error');
         return;
     }
-    
-    const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 
+
+    const monthNames = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno',
                         'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
     const monthName = monthNames[month - 1];
+    const barLabel = BAR_NAMES[currentBar] || currentBar.toUpperCase();
     
     // Calcola totali
     const totaleMese = filtered.reduce((sum, c) => sum + c.granTotale, 0);
@@ -1217,7 +1281,7 @@ function exportToPDF() {
     // Header
     doc.setFontSize(20);
     doc.setTextColor(37, 99, 235);
-    doc.text('SKALETTE', 105, 20, { align: 'center' });
+    doc.text(barLabel, 105, 20, { align: 'center' });
     
     doc.setFontSize(14);
     doc.setTextColor(100);
@@ -1318,7 +1382,7 @@ function exportToPDF() {
     }
     
     // Download
-    const filename = `Chiusure_Skalette_${monthName}_${year}.pdf`;
+    const filename = `Chiusure_${barLabel}_${monthName}_${year}.pdf`;
     doc.save(filename);
     
     showToast(`PDF esportato: ${filename}`, 'success');
@@ -1391,9 +1455,10 @@ function renderAnticipi() {
     const filterValue = filterEl.value;
     const [year, month] = filterValue.split('-').map(Number);
     
-    // Raccogli tutti gli anticipi dalle chiusure del mese
+    // Raccogli tutti gli anticipi dalle chiusure del mese (per il locale selezionato)
     const anticipiMese = [];
     chiusure.filter(c => {
+        if ((c.locale || 'skalette') !== currentBar) return false;
         const date = new Date(c.data);
         return date.getFullYear() === year && (date.getMonth() + 1) === month;
     }).forEach(c => {
